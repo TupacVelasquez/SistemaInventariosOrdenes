@@ -1,0 +1,67 @@
+{
+	"info": {
+		"_postman_id": "d14dae58-55bc-4918-b0d4-11579b69661e",
+		"name": "ProyectoP2",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40530183",
+		"_collection_link": "https://distri-0371.postman.co/workspace/d16c78aa-1287-410b-81de-7c10d6774e54/collection/40530183-d14dae58-55bc-4918-b0d4-11579b69661e?action=share&source=collection_link&creator=40530183"
+	},
+	"item": [
+		{
+			"name": "Post Productos",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get Productos",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Post Proveedor",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Get Proveedor",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Crear Inventario",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener Inventario",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Registrar Compra",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}
