@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # --- BASE DE DATOS ---
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: ms-postgres-db
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=postgres_default
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    networks:
+      - ms-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres_default"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- MICROSERVICIOS ---
+
+  # 1. Productos (Puerto 8081)
+  ms-productos:
+    build: ./ms-productos
+    container_name: ms-productos
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/db_productos
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - ms-network
+
+  # 2. Proveedores (Puerto 8082)
+  ms-proveedores:
+    build: ./ms-proveedores
+    container_name: ms-proveedores
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/db_proveedores
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - ms-network
+
+  # 3. Inventario (Puerto 8083 -> OJO: En local usamos 8084, ajusta si es necesario)
+  # Nota: En tu código local usaste 8084. En Docker podemos mapearlo como queramos.
+  # Vamos a mantener 8084 para ser consistentes con tu código Java.
+  ms-inventario:
+    build: ./ms-inventario
+    container_name: ms-inventario
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/db_inventario
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - ms-network
+
+  # 4. Compras (Puerto 8085)
+  ms-compras:
+    build: ./ms-compras
+    container_name: ms-compras
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/db_compras
+      - SERVICIO_INVENTARIO_URL=http://ms-inventario:8084/api/inventario
+      # ¡AQUÍ ESTÁ EL TRUCO! Sobrescribimos la URL del cliente Feign
+      # Cambiamos 'localhost' por 'ms-inventario' (nombre del servicio arriba)
+      # Nota: Spring Boot traduce camelCase a MAYUSCULAS_GUION_BAJO para variables de entorno.
+      # Si tu @FeignClient tiene url="${...}", se inyecta. Si está hardcoded, esto es más difícil.
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      ms-inventario:
+        condition: service_started
+    networks:
+      - ms-network
+
+  # 5. Ventas (Nuevo servicio)
+  ms-ventas:
+    build: ./ms-ventas
+    container_name: ms-ventas
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/db_ventas
+      - SERVICIO_INVENTARIO_URL=http://ms-inventario:8084/api/inventario
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+      ms-inventario:
+        condition: service_started
+    networks:
+      - ms-network
+  # --- FRONTEND ---
+  frontend:
+    build: ./frontend
+    container_name: ms-frontend
+    ports:
+      - "3000:80" # Mapeamos el puerto 3000 de tu PC al 80 de Nginx
+    networks:
+      - ms-network
+volumes:
+  postgres_data:
+
+networks:
+  ms-network:
+    driver: bridge
